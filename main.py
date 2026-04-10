@@ -1,8 +1,28 @@
 import random
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, RedirectResponse
+from pathlib import Path
+
+from fastapi import FastAPI, Form, Request
+from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
+templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
+
+jobs = [
+    {"name": "офисный шнырь", "min_level": 1, "laptop": None, "income": (20, 40)},
+    {"name": "стажер dev", "min_level": 2, "laptop": None, "income": (40, 80)},
+    {"name": "junior dev", "min_level": 3, "laptop": "Старый ноут", "income": (80, 120)},
+    {"name": "middle dev", "min_level": 5, "laptop": "MacBook Air", "income": (120, 200)},
+    {"name": "senior dev", "min_level": 8, "laptop": "MacBook Pro", "income": (200, 350)},
+    {"name": "архитектор", "min_level": 12, "laptop": "Workstation", "income": (400, 600)},
+]
+
+laptops = [
+    {"name": "Старый ноут", "price": 200},
+    {"name": "MacBook Air", "price": 500},
+    {"name": "MacBook Pro", "price": 1000},
+    {"name": "Workstation", "price": 2000},
+]
 
 player = {
     "energy": 100,
@@ -10,9 +30,15 @@ player = {
     "money": 100,
     "xp": 0,
     "level": 1,
+    "job": "офисный шнырь",
+    "laptop": None,
 }
 
 log: list[str] = []
+
+
+def get_current_job() -> dict:
+    return next(j for j in jobs if j["name"] == player["job"])
 
 
 def clamp(value: int, lo: int = 0, hi: int = 100) -> int:
@@ -39,12 +65,13 @@ def work():
         add_log("❌ Не хватает энергии для работы!")
         return RedirectResponse("/", status_code=303)
 
-    earned = random.randint(40, 80)
+    job = get_current_job()
+    earned = random.randint(*job["income"])
     player["energy"] = clamp(player["energy"] - 15)
     player["mood"] = clamp(player["mood"] - 5)
     player["money"] += earned
     player["xp"] += 10
-    add_log(f"💻 Поработал. Заработал {earned}₽, получил 10 XP.")
+    add_log(f"💻 Поработал ({player['job']}). Заработал {earned}₽, получил 10 XP.")
     check_level_up()
     return RedirectResponse("/", status_code=303)
 
@@ -69,67 +96,50 @@ def fun():
     return RedirectResponse("/", status_code=303)
 
 
-def bar(value: int, color: str) -> str:
-    pct = clamp(value)
-    return (
-        f'<div style="background:#eee;border-radius:6px;height:18px;width:200px;display:inline-block;vertical-align:middle">'
-        f'<div style="background:{color};height:100%;width:{pct}%;border-radius:6px"></div>'
-        f'</div> {value}'
+@app.post("/buy_laptop")
+def buy_laptop(name: str = Form()):
+    laptop = next((l for l in laptops if l["name"] == name), None)
+    if not laptop:
+        add_log("❌ Такого ноутбука не существует!")
+        return RedirectResponse("/", status_code=303)
+    if player["money"] < laptop["price"]:
+        add_log(f"❌ Недостаточно денег на {name}! Нужно {laptop['price']}₽.")
+        return RedirectResponse("/", status_code=303)
+    player["money"] -= laptop["price"]
+    player["laptop"] = name
+    add_log(f"💻 Купил {name} за {laptop['price']}₽!")
+    return RedirectResponse("/", status_code=303)
+
+
+@app.post("/apply_job")
+def apply_job(name: str = Form()):
+    job = next((j for j in jobs if j["name"] == name), None)
+    if not job:
+        add_log("❌ Такой работы не существует!")
+        return RedirectResponse("/", status_code=303)
+    if player["level"] < job["min_level"]:
+        add_log(f"❌ Недостаточно уровня для «{name}»! Нужен {job['min_level']}.")
+        return RedirectResponse("/", status_code=303)
+    if job["laptop"] and player["laptop"] != job["laptop"]:
+        add_log(f"❌ Нужен ноутбук «{job['laptop']}» для работы «{name}»!")
+        return RedirectResponse("/", status_code=303)
+    player["job"] = name
+    add_log(f"🎉 Вы устроились на новую работу: {name}!")
+    return RedirectResponse("/", status_code=303)
+
+
+@app.get("/")
+def index(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={
+            "player": player,
+            "jobs": jobs,
+            "laptops": laptops,
+            "log": log,
+        },
     )
-
-
-@app.get("/", response_class=HTMLResponse)
-def index():
-    log_html = "".join(f"<li>{entry}</li>" for entry in reversed(log))
-
-    work_disabled = "disabled" if player["energy"] < 15 else ""
-    fun_disabled = "disabled" if player["money"] < 20 else ""
-
-    return f"""<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Симулятор айтишника</title>
-<style>
-  body {{ font-family: system-ui, sans-serif; max-width: 480px; margin: 40px auto; padding: 0 16px; background: #f7f7f9; color: #222; }}
-  h1 {{ text-align: center; }}
-  .stats {{ background: #fff; padding: 16px 20px; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }}
-  .stat {{ margin: 8px 0; }}
-  .label {{ display: inline-block; width: 100px; font-weight: 600; }}
-  .actions {{ display: flex; gap: 8px; margin: 20px 0; }}
-  .actions form {{ flex: 1; }}
-  button {{ width: 100%; padding: 10px; font-size: 15px; border: none; border-radius: 8px; cursor: pointer; background: #4f46e5; color: #fff; }}
-  button:hover:not(:disabled) {{ background: #4338ca; }}
-  button:disabled {{ opacity: .45; cursor: not-allowed; }}
-  .log {{ background: #fff; padding: 16px 20px; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-top: 16px; }}
-  .log ul {{ padding-left: 18px; margin: 8px 0 0; }}
-  .log li {{ margin: 4px 0; }}
-</style>
-</head>
-<body>
-<h1>🧑‍💻 Симулятор айтишника</h1>
-
-<div class="stats">
-  <div class="stat"><span class="label">⚡ Энергия</span> {bar(player["energy"], "#22c55e")}</div>
-  <div class="stat"><span class="label">😊 Настроение</span> {bar(player["mood"], "#3b82f6")}</div>
-  <div class="stat"><span class="label">💰 Деньги</span> {player["money"]}₽</div>
-  <div class="stat"><span class="label">✨ Опыт</span> {player["xp"]} / {player["level"] * 100} XP</div>
-  <div class="stat"><span class="label">📈 Уровень</span> {player["level"]}</div>
-</div>
-
-<div class="actions">
-  <form method="post" action="/work"><button {work_disabled}>💻 Работать</button></form>
-  <form method="post" action="/rest"><button>😴 Отдыхать</button></form>
-  <form method="post" action="/fun"><button {fun_disabled}>🎮 Развлечься</button></form>
-</div>
-
-<div class="log">
-  <strong>📜 Последние действия:</strong>
-  <ul>{log_html if log_html else "<li>Пока ничего не произошло...</li>"}</ul>
-</div>
-</body>
-</html>"""
 
 
 if __name__ == "__main__":
