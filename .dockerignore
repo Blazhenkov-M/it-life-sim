@@ -1,0 +1,67 @@
+# Исключаем стандартные временные и кэш-файлы Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Исключаем виртуальные окружения
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Исключаем тесты
+tests/
+
+# Исключаем логи
+logs/
+*.log
+
+# Исключаем git-репозиторий
+.git/
+.gitignore
+
+# Исключаем IDE-файлы
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Исключаем файлы окружения
+.env
+.env.*
+
+# Исключаем временные файлы и дампы
+*.bak
+*.tmp
+dump.rdb
+
+# Исключаем системные файлы
+.DS_Store
+Thumbs.db
+
+# Исключаем любые другие временные или вспомогательные файлы
+*.orig
+*.old
+*.backup
+
+# Исключаем кэши и дистрибутивы
+.coverage
+.tox/
+.pytest_cache/
+.mypy_cache/
+.hypothesis/
+dist/
+build/
+*.egg-info/
+pip-wheel-metadata/
+
+# НЕ исключайте эти файлы - они нужны для сборки!
+# Dockerfile
+# docker-compose.yml
+# requirements.txt
+# *.py
+# README.md (можно оставить если не нужен)
