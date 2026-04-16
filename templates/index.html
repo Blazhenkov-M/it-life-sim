@@ -28,6 +28,8 @@
   .current:hover { background: #e0e7ff; }
   .log ul { padding-left: 18px; margin: 8px 0 0; }
   .log li { margin: 4px 0; }
+  #bg-audio { display: none; }
+  #music-unlock { position: fixed; bottom: 16px; right: 16px; z-index: 10; width: auto; padding: 8px 14px; font-size: 14px; }
 </style>
 </head>
 <body>
@@ -108,6 +110,55 @@
     {% endfor %}
   </ul>
 </div>
+
+<audio id="bg-audio" preload="auto" playsinline></audio>
+<button type="button" id="music-unlock" hidden>🔊 Включить музыку</button>
+<script>
+(function () {
+  const tracks = {{ music_tracks_json | safe }};
+  const audio = document.getElementById('bg-audio');
+  const unlockBtn = document.getElementById('music-unlock');
+  if (!tracks.length) return;
+
+  let i = 0;
+  function loadTrack() {
+    audio.src = tracks[i];
+    audio.load();
+  }
+  function tryPlay() {
+    return audio.play().then(function () {
+      unlockBtn.hidden = true;
+    }).catch(function () {
+      unlockBtn.hidden = false;
+    });
+  }
+  function playWhenReady() {
+    if (audio.readyState >= 2) return tryPlay();
+    return new Promise(function (resolve) {
+      audio.addEventListener('canplay', function onReady() {
+        audio.removeEventListener('canplay', onReady);
+        resolve(tryPlay());
+      }, { once: true });
+    });
+  }
+  audio.addEventListener('ended', function () {
+    i = (i + 1) % tracks.length;
+    loadTrack();
+    playWhenReady();
+  });
+  unlockBtn.addEventListener('click', function () {
+    playWhenReady();
+  });
+  loadTrack();
+  playWhenReady();
+
+  function unlockFromGesture() {
+    if (audio.paused) playWhenReady();
+  }
+  document.body.addEventListener('click', unlockFromGesture, { capture: true, once: true });
+  document.body.addEventListener('touchend', unlockFromGesture, { capture: true, once: true });
+})();
+</script>
 
 </body>
 </html>

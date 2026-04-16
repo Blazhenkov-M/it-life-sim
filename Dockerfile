@@ -7,5 +7,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY main.py .
 COPY templates/ templates/
+COPY audio/ audio/
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

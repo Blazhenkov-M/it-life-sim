@@ -1,12 +1,29 @@
+import json
 import random
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+BASE_DIR = Path(__file__).parent
+
 app = FastAPI()
-templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
+templates = Jinja2Templates(directory=BASE_DIR / "templates")
+app.mount("/audio", StaticFiles(directory=BASE_DIR / "audio"), name="audio")
+
+
+def music_tracks() -> list[str]:
+    music_dir = BASE_DIR / "audio" / "music"
+    if not music_dir.is_dir():
+        return []
+    files = sorted(
+        (p for p in music_dir.iterdir() if p.is_file() and p.suffix.lower() == ".mp3"),
+        key=lambda p: p.name.lower(),
+    )
+    return [f"/audio/music/{quote(p.name)}" for p in files]
 
 jobs = [
     {"name": "офисный шнырь", "min_level": 1, "laptop": None, "income": (20, 40)},
@@ -138,6 +155,7 @@ def index(request: Request):
             "jobs": jobs,
             "laptops": laptops,
             "log": log,
+            "music_tracks_json": json.dumps(music_tracks()),
         },
     )
 
