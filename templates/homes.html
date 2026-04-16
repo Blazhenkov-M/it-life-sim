@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Жильё — Симулятор айтишника</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 480px; margin: 40px auto; padding: 0 16px; background: #f7f7f9; color: #222; }
+  h1 { text-align: center; font-size: 1.25rem; }
+  .back { display: inline-block; margin-bottom: 16px; color: #4f46e5; text-decoration: none; font-weight: 600; }
+  .back:hover { text-decoration: underline; }
+  .card { background: #fff; padding: 16px 20px; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 16px; }
+  .stat { margin: 8px 0; }
+  .label { display: inline-block; width: 120px; font-weight: 600; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .grid form button { font-size: 13px; padding: 8px 6px; width: 100%; }
+  button { padding: 10px; font-size: 15px; border: none; border-radius: 8px; cursor: pointer; background: #4f46e5; color: #fff; }
+  button:hover:not(:disabled) { background: #4338ca; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-green { background: #16a34a; }
+  .btn-green:hover:not(:disabled) { background: #15803d; }
+  .current { background: #e0e7ff; color: #3730a3; cursor: default; }
+  .current:hover { background: #e0e7ff; }
+  .log ul { padding-left: 18px; margin: 8px 0 0; }
+  .log li { margin: 4px 0; }
+  #bg-audio { display: none; }
+  #music-unlock { position: fixed; bottom: 16px; right: 16px; z-index: 10; width: auto; padding: 8px 14px; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<a class="back" href="/">← Главная</a>
+<h1>🏠 Жильё</h1>
+
+<div class="card">
+  <div class="stat"><span class="label">💰 Деньги</span> {{ player.money }}₽</div>
+  <div class="stat"><span class="label">Сейчас</span> {{ player.home }}</div>
+</div>
+
+<div class="card">
+  <h2 style="margin:0 0 10px;font-size:17px;">Варианты</h2>
+  <div class="grid">
+    {% for h in homes %}
+      {% if player.home == h.name %}
+        <form><button class="current" disabled>✅ {{ h.name }}</button></form>
+      {% elif player.money >= h.price %}
+        <form method="post" action="/buy_home">
+          <input type="hidden" name="name" value="{{ h.name }}">
+          <button class="btn-green">{{ h.name }} — {{ h.price }}₽ (+{{ h.rest_bonus }} к отдыху)</button>
+        </form>
+      {% else %}
+        <form><button disabled>{{ h.name }} — {{ h.price }}₽ (+{{ h.rest_bonus }})</button></form>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card log">
+  <strong>📜 Последние действия:</strong>
+  <ul>
+    {% for entry in log | reverse %}
+      <li>{{ entry }}</li>
+    {% else %}
+      <li>Пока ничего не произошло...</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<audio id="bg-audio" preload="auto" playsinline></audio>
+<button type="button" id="music-unlock" hidden>🔊 Включить музыку</button>
+<script>
+(function () {
+  const tracks = {{ music_tracks_json | safe }};
+  const audio = document.getElementById('bg-audio');
+  const unlockBtn = document.getElementById('music-unlock');
+  if (!tracks.length) return;
+
+  let i = 0;
+  function loadTrack() {
+    audio.src = tracks[i];
+    audio.load();
+  }
+  function tryPlay() {
+    return audio.play().then(function () {
+      unlockBtn.hidden = true;
+    }).catch(function () {
+      unlockBtn.hidden = false;
+    });
+  }
+  function playWhenReady() {
+    if (audio.readyState >= 2) return tryPlay();
+    return new Promise(function (resolve) {
+      audio.addEventListener('canplay', function onReady() {
+        audio.removeEventListener('canplay', onReady);
+        resolve(tryPlay());
+      }, { once: true });
+    });
+  }
+  audio.addEventListener('ended', function () {
+    i = (i + 1) % tracks.length;
+    loadTrack();
+    playWhenReady();
+  });
+  unlockBtn.addEventListener('click', function () {
+    playWhenReady();
+  });
+  loadTrack();
+  playWhenReady();
+
+  function unlockFromGesture() {
+    if (audio.paused) playWhenReady();
+  }
+  document.body.addEventListener('click', unlockFromGesture, { capture: true, once: true });
+  document.body.addEventListener('touchend', unlockFromGesture, { capture: true, once: true });
+})();
+</script>
+
+</body>
+</html>

@@ -41,6 +41,19 @@ laptops = [
     {"name": "Workstation", "price": 2000},
 ]
 
+homes = [
+    {"name": "Общага", "price": 0, "rest_bonus": 0},
+    {"name": "Съёмная хата", "price": 300, "rest_bonus": 5},
+    {"name": "Своя квартира", "price": 1000, "rest_bonus": 10},
+]
+
+transport = [
+    {"name": "Пешком", "price": 0, "work_bonus": 0},
+    {"name": "Самокат", "price": 200, "work_bonus": 10},
+    {"name": "Электросамокат", "price": 800, "work_bonus": 25},
+    {"name": "Жига", "price": 1500, "work_bonus": 40},
+]
+
 player = {
     "energy": 100,
     "mood": 100,
@@ -49,6 +62,8 @@ player = {
     "level": 1,
     "job": "офисный шнырь",
     "laptop": None,
+    "home": "Общага",
+    "transport": "Пешком",
 }
 
 log: list[str] = []
@@ -56,6 +71,16 @@ log: list[str] = []
 
 def get_current_job() -> dict:
     return next(j for j in jobs if j["name"] == player["job"])
+
+
+def get_home_rest_bonus() -> int:
+    h = next((x for x in homes if x["name"] == player["home"]), None)
+    return int(h["rest_bonus"]) if h else 0
+
+
+def get_transport_work_bonus_pct() -> int:
+    t = next((x for x in transport if x["name"] == player["transport"]), None)
+    return int(t["work_bonus"]) if t else 0
 
 
 def clamp(value: int, lo: int = 0, hi: int = 100) -> int:
@@ -83,21 +108,30 @@ def work():
         return RedirectResponse("/", status_code=303)
 
     job = get_current_job()
-    earned = random.randint(*job["income"])
+    base = random.randint(*job["income"])
+    bonus_pct = get_transport_work_bonus_pct()
+    earned = int(base * (1 + bonus_pct / 100))
     player["energy"] = clamp(player["energy"] - 15)
     player["mood"] = clamp(player["mood"] - 5)
     player["money"] += earned
     player["xp"] += 10
-    add_log(f"💻 Поработал ({player['job']}). Заработал {earned}₽, получил 10 XP.")
+    if bonus_pct:
+        add_log(
+            f"💻 Поработал ({player['job']}). Заработал {earned}₽ "
+            f"(+{bonus_pct}% от транспорта), получил 10 XP."
+        )
+    else:
+        add_log(f"💻 Поработал ({player['job']}). Заработал {earned}₽, получил 10 XP.")
     check_level_up()
     return RedirectResponse("/", status_code=303)
 
 
 @app.post("/rest")
 def rest():
-    player["energy"] = clamp(player["energy"] + 25)
+    rest_bonus = get_home_rest_bonus()
+    player["energy"] = clamp(player["energy"] + 25 + rest_bonus)
     player["mood"] = clamp(player["mood"] + 10)
-    add_log("😴 Отдохнул. Энергия +25, настроение +10.")
+    add_log(f"😴 Отдохнул. Энергия +{25 + rest_bonus}, настроение +10.")
     return RedirectResponse("/", status_code=303)
 
 
@@ -143,6 +177,64 @@ def apply_job(name: str = Form()):
     player["job"] = name
     add_log(f"🎉 Вы устроились на новую работу: {name}!")
     return RedirectResponse("/", status_code=303)
+
+
+@app.post("/buy_home")
+def buy_home(name: str = Form()):
+    home = next((h for h in homes if h["name"] == name), None)
+    if not home:
+        add_log("❌ Такого жилья нет!")
+        return RedirectResponse("/homes", status_code=303)
+    if player["money"] < home["price"]:
+        add_log("Недостаточно денег")
+        return RedirectResponse("/homes", status_code=303)
+    player["money"] -= home["price"]
+    player["home"] = name
+    add_log("Куплено!")
+    return RedirectResponse("/homes", status_code=303)
+
+
+@app.post("/buy_transport")
+def buy_transport(name: str = Form()):
+    item = next((t for t in transport if t["name"] == name), None)
+    if not item:
+        add_log("❌ Такого транспорта нет!")
+        return RedirectResponse("/transport", status_code=303)
+    if player["money"] < item["price"]:
+        add_log("Недостаточно денег")
+        return RedirectResponse("/transport", status_code=303)
+    player["money"] -= item["price"]
+    player["transport"] = name
+    add_log("Куплено!")
+    return RedirectResponse("/transport", status_code=303)
+
+
+@app.get("/homes")
+def homes_page(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="homes.html",
+        context={
+            "player": player,
+            "homes": homes,
+            "log": log,
+            "music_tracks_json": json.dumps(music_tracks()),
+        },
+    )
+
+
+@app.get("/transport")
+def transport_page(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="transport.html",
+        context={
+            "player": player,
+            "transport": transport,
+            "log": log,
+            "music_tracks_json": json.dumps(music_tracks()),
+        },
+    )
 
 
 @app.get("/")

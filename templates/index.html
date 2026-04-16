@@ -17,6 +17,9 @@
   button { width: 100%; padding: 10px; font-size: 15px; border: none; border-radius: 8px; cursor: pointer; background: #4f46e5; color: #fff; }
   button:hover:not(:disabled) { background: #4338ca; }
   button:disabled { opacity: .45; cursor: not-allowed; }
+  .nav-link { flex: 1; text-decoration: none; color: inherit; }
+  .nav-link-inner { display: block; width: 100%; padding: 10px; font-size: 15px; border-radius: 8px; text-align: center; background: #6366f1; color: #fff; }
+  .nav-link:hover .nav-link-inner { background: #4f46e5; }
   .card h2 { margin: 0 0 10px; font-size: 17px; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .grid form button { font-size: 13px; padding: 8px 6px; }
@@ -50,6 +53,13 @@
   <div class="stat"><span class="label">📈 Уровень</span> {{ player.level }}</div>
   <div class="stat"><span class="label">💼 Работа</span> {{ player.job }}</div>
   <div class="stat"><span class="label">💻 Ноутбук</span> {{ player.laptop or "нет" }}</div>
+  <div class="stat"><span class="label">🏠 Жильё</span> {{ player.home }}</div>
+  <div class="stat"><span class="label">🛴 Транспорт</span> {{ player.transport }}</div>
+</div>
+
+<div class="actions">
+  <a href="/homes" class="nav-link"><span class="nav-link-inner">Жильё</span></a>
+  <a href="/transport" class="nav-link"><span class="nav-link-inner">Транспорт</span></a>
 </div>
 
 <div class="actions">
