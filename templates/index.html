@@ -78,6 +78,17 @@
     padding-top: 14px;
     border-top: 1px solid #e2e8f0;
   }
+  .dash-meta + .dash-meta {
+    margin-top: 0;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+  }
+  .skills-list .dash-meta-row { border-bottom-color: #f1f5f9; }
+  .skills-soon {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #94a3b8;
+  }
   .dash-meta-row {
     display: flex;
     justify-content: space-between;
@@ -154,6 +165,21 @@
     color: #64748b;
     line-height: 1.45;
   }
+  .fun-stack { display: flex; flex-direction: column; gap: 10px; }
+  .fun-stack form { margin: 0; }
+  .btn-fun-option {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    text-align: left;
+    padding: 12px 14px;
+    height: auto;
+    min-height: auto;
+    line-height: 1.3;
+  }
+  .btn-fun-option__title { font-weight: 700; font-size: 1rem; }
+  .btn-fun-option__meta { font-size: 0.85rem; font-weight: 500; opacity: 0.95; }
   .relations-placeholder { color: #64748b; font-size: 0.95rem; line-height: 1.5; margin: 0; }
 
   .modal-backdrop {
@@ -368,6 +394,20 @@
     </div>
     <div class="dash-meta">
       <div class="dash-meta-row">
+        <span class="dash-meta-label">✨ Опыт</span>
+        <span class="dash-meta-val">{{ player.xp }} / {{ player.level * 100 }} XP</span>
+      </div>
+      <div class="dash-meta-row">
+        <span class="dash-meta-label">📈 Уровень</span>
+        <span class="dash-meta-val">{{ player.level }}</span>
+      </div>
+      <div class="dash-meta-row">
+        <span class="dash-meta-label">💻 Ноутбук</span>
+        <span class="dash-meta-val">{{ player.laptop or "нет" }}</span>
+      </div>
+    </div>
+    <div class="dash-meta">
+      <div class="dash-meta-row">
         <span class="dash-meta-label">💰 Деньги</span>
         <span class="dash-meta-val dash-meta-val--money">{{ player.money }}₽</span>
       </div>
@@ -403,10 +443,22 @@
       <h2 id="modal-skills-title">📚 Навыки</h2>
       <button type="button" class="modal-close" data-close-modal aria-label="Закрыть">×</button>
     </div>
-    <div class="card">
-      <div class="stat"><span class="label">✨ Опыт</span> {{ player.xp }} / {{ player.level * 100 }} XP</div>
-      <div class="stat"><span class="label">📈 Уровень</span> {{ player.level }}</div>
-      <div class="stat"><span class="label">💻 Ноутбук</span> {{ player.laptop or "нет" }}</div>
+    <div class="card skills-list">
+      <p class="home-dashboard__title" style="margin-bottom:12px;">Компетенции</p>
+      <div class="dash-meta" style="margin:0;padding:0;border:none;">
+        <div class="dash-meta-row">
+          <span class="dash-meta-label">📄 Microsoft Office</span>
+          <span class="skills-soon">скоро</span>
+        </div>
+        <div class="dash-meta-row">
+          <span class="dash-meta-label">🐍 Python</span>
+          <span class="skills-soon">скоро</span>
+        </div>
+        <div class="dash-meta-row">
+          <span class="dash-meta-label">🚗 Права кат. В</span>
+          <span class="skills-soon">скоро</span>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -428,9 +480,6 @@
           <div class="actions">
             <form method="post" action="/work">
               <button type="submit" {{ "disabled" if player.energy < 15 }}>💻 Работать</button>
-            </form>
-            <form method="post" action="/rest">
-              <button type="submit">😴 Отдыхать</button>
             </form>
           </div>
         </div>
@@ -495,7 +544,7 @@
               {% elif player.money >= h.price %}
                 <form method="post" action="/buy_home">
                   <input type="hidden" name="name" value="{{ h.name }}">
-                  <button type="submit" class="btn-green">{{ h.name }} — {{ h.price }}₽ (+{{ h.rest_bonus }})</button>
+                  <button type="submit" class="btn-green">{{ h.name }} — {{ h.price }}₽</button>
                 </form>
               {% else %}
                 <form><button type="button" disabled>{{ h.name }} — {{ h.price }}₽</button></form>
@@ -532,11 +581,7 @@
       <button type="button" class="modal-close" data-close-modal aria-label="Закрыть">×</button>
     </div>
     <div class="card">
-      <div class="stat">
-        <span class="label">😊 Настроение</span>
-        <div class="bar-bg"><div class="bar-fill" style="background:#ec4899;width:{{ player.mood }}%"></div></div> {{ player.mood }}
-      </div>
-      <p class="relations-placeholder">Здесь будут коллеги, друзья и быт. Пока прокачивай настроение через отдых и развлечения — скоро добавим сюда сюжеты.</p>
+      <p class="relations-placeholder">Здесь будут коллеги, друзья и быт. Пока прокачивай настроение через развлечения — скоро добавим сюда сюжеты.</p>
     </div>
   </div>
 </div>
@@ -547,10 +592,16 @@
       <h2 id="modal-fun-title">🎮 Развлечения</h2>
       <button type="button" class="modal-close" data-close-modal aria-label="Закрыть">×</button>
     </div>
-    <div class="actions">
+    <div class="card fun-stack">
+      {% for fa in fun_activities %}
       <form method="post" action="/fun">
-        <button type="submit" {{ "disabled" if player.money < 20 }}>🎮 Развлечься (−20₽)</button>
+        <input type="hidden" name="activity" value="{{ fa.id }}">
+        <button type="submit" class="btn-fun-option" {{ "disabled" if player.money < fa.price }}>
+          <span class="btn-fun-option__title">{{ fa.title }}</span>
+          <span class="btn-fun-option__meta">{{ fa.price }}₽ · +{{ fa.mood }} к настроению</span>
+        </button>
       </form>
+      {% endfor %}
     </div>
     <p class="modal-fun-hint">События смотри на главном экране в блоке «Последние действия».</p>
   </div>

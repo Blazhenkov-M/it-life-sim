@@ -42,9 +42,9 @@ laptops = [
 ]
 
 homes = [
-    {"name": "Общага", "price": 0, "rest_bonus": 0},
-    {"name": "Съёмная хата", "price": 300, "rest_bonus": 5},
-    {"name": "Своя квартира", "price": 1000, "rest_bonus": 10},
+    {"name": "Общага", "price": 0},
+    {"name": "Съёмная хата", "price": 300},
+    {"name": "Своя квартира", "price": 1000},
 ]
 
 transport = [
@@ -53,6 +53,17 @@ transport = [
     {"name": "Электросамокат", "price": 800, "work_bonus": 25},
     {"name": "Жига", "price": 1500, "work_bonus": 40},
 ]
+
+FUN_ACTIVITIES = [
+    {"id": "walk", "title": "Прогулка", "price": 0, "mood": 5},
+    {"id": "beer", "title": "Выпить пива", "price": 200, "mood": 25},
+    {"id": "sauna", "title": "Сходить в сауну", "price": 5000, "mood": 70},
+]
+
+
+def fun_activity_by_id(activity_id: str) -> dict | None:
+    return next((a for a in FUN_ACTIVITIES if a["id"] == activity_id), None)
+
 
 player = {
     "energy": 100,
@@ -71,11 +82,6 @@ log: list[str] = []
 
 def get_current_job() -> dict:
     return next(j for j in jobs if j["name"] == player["job"])
-
-
-def get_home_rest_bonus() -> int:
-    h = next((x for x in homes if x["name"] == player["home"]), None)
-    return int(h["rest_bonus"]) if h else 0
 
 
 def get_transport_work_bonus_pct() -> int:
@@ -126,24 +132,22 @@ def work():
     return RedirectResponse("/?tab=work&worktab=freelance", status_code=303)
 
 
-@app.post("/rest")
-def rest():
-    rest_bonus = get_home_rest_bonus()
-    player["energy"] = clamp(player["energy"] + 25 + rest_bonus)
-    player["mood"] = clamp(player["mood"] + 10)
-    add_log(f"😴 Отдохнул. Энергия +{25 + rest_bonus}, настроение +10.")
-    return RedirectResponse("/?tab=work&worktab=freelance", status_code=303)
-
-
 @app.post("/fun")
-def fun():
-    if player["money"] < 20:
-        add_log("❌ Не хватает денег на развлечения!")
+def fun(activity: str = Form()):
+    act = fun_activity_by_id(activity)
+    if not act:
+        add_log("❌ Такого развлечения нет!")
+        return RedirectResponse("/?tab=fun", status_code=303)
+    if player["money"] < act["price"]:
+        add_log(f"❌ Не хватает денег на «{act['title']}»! Нужно {act['price']}₽.")
         return RedirectResponse("/?tab=fun", status_code=303)
 
-    player["mood"] = clamp(player["mood"] + 20)
-    player["money"] -= 20
-    add_log("🎮 Развлёкся! Настроение +20, деньги -20.")
+    player["mood"] = clamp(player["mood"] + act["mood"])
+    player["money"] -= act["price"]
+    if act["price"]:
+        add_log(f"🎉 {act['title']}! Настроение +{act['mood']}, −{act['price']}₽.")
+    else:
+        add_log(f"🎉 {act['title']}! Настроение +{act['mood']}.")
     return RedirectResponse("/?tab=fun", status_code=303)
 
 
@@ -230,6 +234,7 @@ def index(request: Request):
             "laptops": laptops,
             "homes": homes,
             "transport": transport,
+            "fun_activities": FUN_ACTIVITIES,
             "log": log,
             "music_tracks_json": json.dumps(music_tracks()),
         },
