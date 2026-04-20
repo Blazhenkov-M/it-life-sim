@@ -105,7 +105,7 @@ def check_level_up() -> None:
 def work():
     if player["energy"] < 15:
         add_log("❌ Не хватает энергии для работы!")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/?tab=work", status_code=303)
 
     job = get_current_job()
     base = random.randint(*job["income"])
@@ -123,7 +123,7 @@ def work():
     else:
         add_log(f"💻 Поработал ({player['job']}). Заработал {earned}₽, получил 10 XP.")
     check_level_up()
-    return RedirectResponse("/", status_code=303)
+    return RedirectResponse("/?tab=work", status_code=303)
 
 
 @app.post("/rest")
@@ -132,19 +132,19 @@ def rest():
     player["energy"] = clamp(player["energy"] + 25 + rest_bonus)
     player["mood"] = clamp(player["mood"] + 10)
     add_log(f"😴 Отдохнул. Энергия +{25 + rest_bonus}, настроение +10.")
-    return RedirectResponse("/", status_code=303)
+    return RedirectResponse("/?tab=work", status_code=303)
 
 
 @app.post("/fun")
 def fun():
     if player["money"] < 20:
         add_log("❌ Не хватает денег на развлечения!")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/?tab=fun", status_code=303)
 
     player["mood"] = clamp(player["mood"] + 20)
     player["money"] -= 20
     add_log("🎮 Развлёкся! Настроение +20, деньги -20.")
-    return RedirectResponse("/", status_code=303)
+    return RedirectResponse("/?tab=fun", status_code=303)
 
 
 @app.post("/buy_laptop")
@@ -152,14 +152,14 @@ def buy_laptop(name: str = Form()):
     laptop = next((l for l in laptops if l["name"] == name), None)
     if not laptop:
         add_log("❌ Такого ноутбука не существует!")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/?tab=shop", status_code=303)
     if player["money"] < laptop["price"]:
         add_log(f"❌ Недостаточно денег на {name}! Нужно {laptop['price']}₽.")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/?tab=shop", status_code=303)
     player["money"] -= laptop["price"]
     player["laptop"] = name
     add_log(f"💻 Купил {name} за {laptop['price']}₽!")
-    return RedirectResponse("/", status_code=303)
+    return RedirectResponse("/?tab=shop", status_code=303)
 
 
 @app.post("/apply_job")
@@ -167,16 +167,16 @@ def apply_job(name: str = Form()):
     job = next((j for j in jobs if j["name"] == name), None)
     if not job:
         add_log("❌ Такой работы не существует!")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/?tab=skills", status_code=303)
     if player["level"] < job["min_level"]:
         add_log(f"❌ Недостаточно уровня для «{name}»! Нужен {job['min_level']}.")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/?tab=skills", status_code=303)
     if job["laptop"] and player["laptop"] != job["laptop"]:
         add_log(f"❌ Нужен ноутбук «{job['laptop']}» для работы «{name}»!")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/?tab=skills", status_code=303)
     player["job"] = name
     add_log(f"🎉 Вы устроились на новую работу: {name}!")
-    return RedirectResponse("/", status_code=303)
+    return RedirectResponse("/?tab=skills", status_code=303)
 
 
 @app.post("/buy_home")
@@ -184,14 +184,14 @@ def buy_home(name: str = Form()):
     home = next((h for h in homes if h["name"] == name), None)
     if not home:
         add_log("❌ Такого жилья нет!")
-        return RedirectResponse("/?open=homes", status_code=303)
+        return RedirectResponse("/?tab=shop", status_code=303)
     if player["money"] < home["price"]:
         add_log("Недостаточно денег")
-        return RedirectResponse("/?open=homes", status_code=303)
+        return RedirectResponse("/?tab=shop", status_code=303)
     player["money"] -= home["price"]
     player["home"] = name
     add_log("Куплено!")
-    return RedirectResponse("/?open=homes", status_code=303)
+    return RedirectResponse("/?tab=shop", status_code=303)
 
 
 @app.post("/buy_transport")
@@ -199,24 +199,24 @@ def buy_transport(name: str = Form()):
     item = next((t for t in transport if t["name"] == name), None)
     if not item:
         add_log("❌ Такого транспорта нет!")
-        return RedirectResponse("/?open=transport", status_code=303)
+        return RedirectResponse("/?tab=shop", status_code=303)
     if player["money"] < item["price"]:
         add_log("Недостаточно денег")
-        return RedirectResponse("/?open=transport", status_code=303)
+        return RedirectResponse("/?tab=shop", status_code=303)
     player["money"] -= item["price"]
     player["transport"] = name
     add_log("Куплено!")
-    return RedirectResponse("/?open=transport", status_code=303)
+    return RedirectResponse("/?tab=shop", status_code=303)
 
 
 @app.get("/homes")
 def homes_redirect():
-    return RedirectResponse("/?open=homes", status_code=307)
+    return RedirectResponse("/?tab=shop", status_code=307)
 
 
 @app.get("/transport")
 def transport_redirect():
-    return RedirectResponse("/?open=transport", status_code=307)
+    return RedirectResponse("/?tab=shop", status_code=307)
 
 
 @app.get("/")
