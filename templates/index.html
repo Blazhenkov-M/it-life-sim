@@ -2,24 +2,66 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Симулятор айтишника</title>
 <style>
-  body { font-family: system-ui, sans-serif; max-width: 480px; margin: 40px auto; padding: 0 16px; background: #f7f7f9; color: #222; }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; height: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    max-width: min(480px, 100%);
+    margin: 0 auto;
+    padding: max(24px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(24px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    min-height: 100dvh;
+    min-height: 100vh;
+    background: #f7f7f9;
+    color: #222;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: rgba(79, 70, 229, 0.12);
+  }
+  @media (min-width: 900px) {
+    body {
+      max-width: 520px;
+      padding-top: max(40px, env(safe-area-inset-top, 0px));
+      padding-bottom: max(40px, env(safe-area-inset-bottom, 0px));
+    }
+  }
   body.modal-open { overflow: hidden; }
-  h1 { text-align: center; }
-  .card { background: #fff; padding: 16px 20px; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 16px; }
-  .stat { margin: 8px 0; }
-  .label { display: inline-block; width: 100px; font-weight: 600; }
-  .bar-bg { background: #eee; border-radius: 6px; height: 18px; width: 200px; display: inline-block; vertical-align: middle; }
+  h1 { text-align: center; font-size: clamp(1.1rem, 4vw, 1.5rem); margin-top: 0; }
+  .card { background: #fff; padding: 16px 20px; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 16px; max-width: 100%; }
+  .stat {
+    margin: 8px 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    overflow-wrap: anywhere;
+  }
+  .label { display: inline-block; width: 100px; flex: 0 0 auto; font-weight: 600; }
+  .bar-bg {
+    background: #eee;
+    border-radius: 6px;
+    height: 18px;
+    flex: 1 1 120px;
+    min-width: 72px;
+    max-width: 200px;
+    display: inline-block;
+    vertical-align: middle;
+  }
   .bar-fill { height: 100%; border-radius: 6px; }
   .actions { display: flex; gap: 8px; margin-bottom: 16px; }
   .actions form { flex: 1; }
-  button { width: 100%; padding: 10px; font-size: 15px; border: none; border-radius: 8px; cursor: pointer; background: #4f46e5; color: #fff; }
+  button { width: 100%; padding: 10px 12px; font-size: 15px; border: none; border-radius: 8px; cursor: pointer; background: #4f46e5; color: #fff; touch-action: manipulation; }
   button:hover:not(:disabled) { background: #4338ca; }
   button:disabled { opacity: .45; cursor: not-allowed; }
-  .nav-btn { flex: 1; display: block; width: 100%; padding: 10px; font-size: 15px; border-radius: 8px; text-align: center; background: #6366f1; color: #fff; font: inherit; cursor: pointer; border: none; }
+  button:focus-visible, .nav-btn:focus-visible, .modal-close:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
+  .nav-btn { flex: 1; display: block; width: 100%; padding: 10px 12px; font-size: 15px; border-radius: 8px; text-align: center; background: #6366f1; color: #fff; font: inherit; cursor: pointer; border: none; touch-action: manipulation; }
   .nav-btn:hover { background: #4f46e5; }
+  @media (hover: none) and (pointer: coarse) {
+    button:not(:disabled):active, .nav-btn:active { filter: brightness(0.95); }
+  }
   .card h2 { margin: 0 0 10px; font-size: 17px; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .grid form button { font-size: 13px; padding: 8px 6px; }
@@ -30,9 +72,18 @@
   .current { background: #e0e7ff; color: #3730a3; cursor: default; }
   .current:hover { background: #e0e7ff; }
   .log ul { padding-left: 18px; margin: 8px 0 0; }
-  .log li { margin: 4px 0; }
+  .log li { margin: 4px 0; overflow-wrap: anywhere; word-break: break-word; }
   #bg-audio { display: none; }
-  #music-unlock { position: fixed; bottom: 16px; right: 16px; z-index: 300; width: auto; padding: 8px 14px; font-size: 14px; }
+  #music-unlock {
+    position: fixed;
+    bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    right: max(16px, env(safe-area-inset-right, 0px));
+    z-index: 300;
+    width: auto;
+    max-width: calc(100vw - 32px);
+    padding: 8px 14px;
+    font-size: 14px;
+  }
 
   .modal-label-wide .label { width: 120px; }
 
@@ -43,7 +94,7 @@
     z-index: 200;
     align-items: center;
     justify-content: center;
-    padding: 16px;
+    padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
     background: rgba(15, 23, 42, 0.45);
     box-sizing: border-box;
   }
@@ -53,10 +104,11 @@
     border-radius: 14px;
     max-width: 480px;
     width: 100%;
-    max-height: min(90vh, 900px);
+    max-height: min(90dvh, 900px);
     overflow: auto;
     padding: 16px 18px 20px;
     box-shadow: 0 20px 50px rgba(0,0,0,.2);
+    -webkit-overflow-scrolling: touch;
   }
   .modal-head {
     display: flex;
@@ -84,6 +136,19 @@
     cursor: pointer;
   }
   .modal-close:hover { background: #d1d5db; }
+
+  @media (hover: none) and (pointer: coarse) {
+    button, .nav-btn { min-height: 44px; padding-top: 12px; padding-bottom: 12px; }
+    .grid form button { min-height: 44px; padding: 10px 8px; font-size: 14px; }
+    .modal-close { width: 44px; height: 44px; }
+    body { padding-bottom: max(88px, env(safe-area-inset-bottom, 0px) + 56px); }
+  }
+  @media (hover: hover) and (pointer: fine) {
+    button:not(:disabled):active, .nav-btn:active { transform: scale(0.98); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    button:not(:disabled):active, .nav-btn:active { transform: none; filter: none; }
+  }
 </style>
 </head>
 <body>
