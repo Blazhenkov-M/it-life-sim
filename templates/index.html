@@ -6,6 +6,7 @@
 <title>Симулятор айтишника</title>
 <style>
   body { font-family: system-ui, sans-serif; max-width: 480px; margin: 40px auto; padding: 0 16px; background: #f7f7f9; color: #222; }
+  body.modal-open { overflow: hidden; }
   h1 { text-align: center; }
   .card { background: #fff; padding: 16px 20px; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 16px; }
   .stat { margin: 8px 0; }
@@ -17,9 +18,8 @@
   button { width: 100%; padding: 10px; font-size: 15px; border: none; border-radius: 8px; cursor: pointer; background: #4f46e5; color: #fff; }
   button:hover:not(:disabled) { background: #4338ca; }
   button:disabled { opacity: .45; cursor: not-allowed; }
-  .nav-link { flex: 1; text-decoration: none; color: inherit; }
-  .nav-link-inner { display: block; width: 100%; padding: 10px; font-size: 15px; border-radius: 8px; text-align: center; background: #6366f1; color: #fff; }
-  .nav-link:hover .nav-link-inner { background: #4f46e5; }
+  .nav-btn { flex: 1; display: block; width: 100%; padding: 10px; font-size: 15px; border-radius: 8px; text-align: center; background: #6366f1; color: #fff; font: inherit; cursor: pointer; border: none; }
+  .nav-btn:hover { background: #4f46e5; }
   .card h2 { margin: 0 0 10px; font-size: 17px; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .grid form button { font-size: 13px; padding: 8px 6px; }
@@ -32,7 +32,58 @@
   .log ul { padding-left: 18px; margin: 8px 0 0; }
   .log li { margin: 4px 0; }
   #bg-audio { display: none; }
-  #music-unlock { position: fixed; bottom: 16px; right: 16px; z-index: 10; width: auto; padding: 8px 14px; font-size: 14px; }
+  #music-unlock { position: fixed; bottom: 16px; right: 16px; z-index: 300; width: auto; padding: 8px 14px; font-size: 14px; }
+
+  .modal-label-wide .label { width: 120px; }
+
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(15, 23, 42, 0.45);
+    box-sizing: border-box;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal-panel {
+    background: #f7f7f9;
+    border-radius: 14px;
+    max-width: 480px;
+    width: 100%;
+    max-height: min(90vh, 900px);
+    overflow: auto;
+    padding: 16px 18px 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.2);
+  }
+  .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .modal-head h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+  .modal-close {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+    background: #e5e7eb;
+    color: #374151;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .modal-close:hover { background: #d1d5db; }
 </style>
 </head>
 <body>
@@ -58,8 +109,8 @@
 </div>
 
 <div class="actions">
-  <a href="/homes" class="nav-link"><span class="nav-link-inner">Жильё</span></a>
-  <a href="/transport" class="nav-link"><span class="nav-link-inner">Транспорт</span></a>
+  <button type="button" class="nav-btn" data-open-modal="homes">Жильё</button>
+  <button type="button" class="nav-btn" data-open-modal="transport">Транспорт</button>
 </div>
 
 <div class="actions">
@@ -121,6 +172,86 @@
   </ul>
 </div>
 
+<div class="modal-backdrop" id="modal-homes" role="dialog" aria-modal="true" aria-labelledby="modal-homes-title">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <h2 id="modal-homes-title">🏠 Жильё</h2>
+      <button type="button" class="modal-close" data-close-modal aria-label="Закрыть">×</button>
+    </div>
+    <div class="card modal-label-wide">
+      <div class="stat"><span class="label">💰 Деньги</span> {{ player.money }}₽</div>
+      <div class="stat"><span class="label">Сейчас</span> {{ player.home }}</div>
+    </div>
+    <div class="card">
+      <h2 style="margin:0 0 10px;font-size:17px;">Варианты</h2>
+      <div class="grid">
+        {% for h in homes %}
+          {% if player.home == h.name %}
+            <form><button class="current" disabled>✅ {{ h.name }}</button></form>
+          {% elif player.money >= h.price %}
+            <form method="post" action="/buy_home">
+              <input type="hidden" name="name" value="{{ h.name }}">
+              <button class="btn-green">{{ h.name }} — {{ h.price }}₽ (+{{ h.rest_bonus }} к отдыху)</button>
+            </form>
+          {% else %}
+            <form><button disabled>{{ h.name }} — {{ h.price }}₽ (+{{ h.rest_bonus }})</button></form>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card log">
+      <strong>📜 Последние действия:</strong>
+      <ul>
+        {% for entry in log | reverse %}
+          <li>{{ entry }}</li>
+        {% else %}
+          <li>Пока ничего не произошло...</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-transport" role="dialog" aria-modal="true" aria-labelledby="modal-transport-title">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <h2 id="modal-transport-title">🛴 Транспорт</h2>
+      <button type="button" class="modal-close" data-close-modal aria-label="Закрыть">×</button>
+    </div>
+    <div class="card modal-label-wide">
+      <div class="stat"><span class="label">💰 Деньги</span> {{ player.money }}₽</div>
+      <div class="stat"><span class="label">Сейчас</span> {{ player.transport }}</div>
+    </div>
+    <div class="card">
+      <h2 style="margin:0 0 10px;font-size:17px;">Варианты</h2>
+      <div class="grid">
+        {% for t in transport %}
+          {% if player.transport == t.name %}
+            <form><button class="current" disabled>✅ {{ t.name }}</button></form>
+          {% elif player.money >= t.price %}
+            <form method="post" action="/buy_transport">
+              <input type="hidden" name="name" value="{{ t.name }}">
+              <button class="btn-green">{{ t.name }} — {{ t.price }}₽ (+{{ t.work_bonus }}% к работе)</button>
+            </form>
+          {% else %}
+            <form><button disabled>{{ t.name }} — {{ t.price }}₽ (+{{ t.work_bonus }}%)</button></form>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card log">
+      <strong>📜 Последние действия:</strong>
+      <ul>
+        {% for entry in log | reverse %}
+          <li>{{ entry }}</li>
+        {% else %}
+          <li>Пока ничего не произошло...</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
 <audio id="bg-audio" preload="auto" playsinline></audio>
 <button type="button" id="music-unlock" hidden>🔊 Включить музыку</button>
 <script>
@@ -167,6 +298,59 @@
   }
   document.body.addEventListener('click', unlockFromGesture, { capture: true, once: true });
   document.body.addEventListener('touchend', unlockFromGesture, { capture: true, once: true });
+})();
+</script>
+<script>
+(function () {
+  var homesEl = document.getElementById('modal-homes');
+  var transportEl = document.getElementById('modal-transport');
+
+  function openModal(name) {
+    if (name === 'homes') {
+      homesEl.classList.add('open');
+      transportEl.classList.remove('open');
+    } else if (name === 'transport') {
+      transportEl.classList.add('open');
+      homesEl.classList.remove('open');
+    } else return;
+    document.body.classList.add('modal-open');
+  }
+
+  function closeModals() {
+    homesEl.classList.remove('open');
+    transportEl.classList.remove('open');
+    document.body.classList.remove('modal-open');
+  }
+
+  document.querySelectorAll('[data-open-modal]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      openModal(btn.getAttribute('data-open-modal'));
+    });
+  });
+
+  document.querySelectorAll('[data-close-modal]').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      closeModals();
+    });
+  });
+
+  [homesEl, transportEl].forEach(function (bd) {
+    bd.addEventListener('click', function (e) {
+      if (e.target === bd) closeModals();
+    });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeModals();
+  });
+
+  var params = new URLSearchParams(window.location.search);
+  var o = params.get('open');
+  if (o === 'homes' || o === 'transport') {
+    openModal(o);
+    try { history.replaceState({}, '', '/'); } catch (err) {}
+  }
 })();
 </script>
 

@@ -184,14 +184,14 @@ def buy_home(name: str = Form()):
     home = next((h for h in homes if h["name"] == name), None)
     if not home:
         add_log("❌ Такого жилья нет!")
-        return RedirectResponse("/homes", status_code=303)
+        return RedirectResponse("/?open=homes", status_code=303)
     if player["money"] < home["price"]:
         add_log("Недостаточно денег")
-        return RedirectResponse("/homes", status_code=303)
+        return RedirectResponse("/?open=homes", status_code=303)
     player["money"] -= home["price"]
     player["home"] = name
     add_log("Куплено!")
-    return RedirectResponse("/homes", status_code=303)
+    return RedirectResponse("/?open=homes", status_code=303)
 
 
 @app.post("/buy_transport")
@@ -199,42 +199,24 @@ def buy_transport(name: str = Form()):
     item = next((t for t in transport if t["name"] == name), None)
     if not item:
         add_log("❌ Такого транспорта нет!")
-        return RedirectResponse("/transport", status_code=303)
+        return RedirectResponse("/?open=transport", status_code=303)
     if player["money"] < item["price"]:
         add_log("Недостаточно денег")
-        return RedirectResponse("/transport", status_code=303)
+        return RedirectResponse("/?open=transport", status_code=303)
     player["money"] -= item["price"]
     player["transport"] = name
     add_log("Куплено!")
-    return RedirectResponse("/transport", status_code=303)
+    return RedirectResponse("/?open=transport", status_code=303)
 
 
 @app.get("/homes")
-def homes_page(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="homes.html",
-        context={
-            "player": player,
-            "homes": homes,
-            "log": log,
-            "music_tracks_json": json.dumps(music_tracks()),
-        },
-    )
+def homes_redirect():
+    return RedirectResponse("/?open=homes", status_code=307)
 
 
 @app.get("/transport")
-def transport_page(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="transport.html",
-        context={
-            "player": player,
-            "transport": transport,
-            "log": log,
-            "music_tracks_json": json.dumps(music_tracks()),
-        },
-    )
+def transport_redirect():
+    return RedirectResponse("/?open=transport", status_code=307)
 
 
 @app.get("/")
@@ -246,6 +228,8 @@ def index(request: Request):
             "player": player,
             "jobs": jobs,
             "laptops": laptops,
+            "homes": homes,
+            "transport": transport,
             "log": log,
             "music_tracks_json": json.dumps(music_tracks()),
         },
