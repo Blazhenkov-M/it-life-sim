@@ -30,21 +30,73 @@
   @media (min-width: 900px) {
     body { padding-top: max(32px, env(safe-area-inset-top, 0px)); }
   }
-  h1 { text-align: center; font-size: clamp(1.1rem, 4vw, 1.45rem); margin: 0 0 12px; }
-  .status-strip {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px 16px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #334155;
-    margin-bottom: 16px;
-    padding: 10px 12px;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  h1 { text-align: center; font-size: clamp(1.1rem, 4vw, 1.45rem); margin: 0 0 14px; }
+  .home-main { margin-bottom: 8px; }
+  .home-dashboard { padding: 18px 18px 16px; }
+  .home-dashboard__title {
+    margin: 0 0 14px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64748b;
+    text-align: center;
   }
+  .dash-bars {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 16px;
+    margin-bottom: 4px;
+  }
+  @media (max-width: 340px) {
+    .dash-bars { grid-template-columns: 1fr; }
+  }
+  .dash-bar-col { min-width: 0; }
+  .dash-bar-caption {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 6px;
+  }
+  .dash-bar-col .bar-bg {
+    max-width: none;
+    width: 100%;
+    flex: none;
+    display: block;
+  }
+  .dash-bar-num {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #475569;
+    text-align: right;
+  }
+  .dash-meta {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid #e2e8f0;
+  }
+  .dash-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.95rem;
+    line-height: 1.35;
+  }
+  .dash-meta-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .dash-meta-label { color: #64748b; font-weight: 600; flex-shrink: 0; }
+  .dash-meta-val {
+    text-align: right;
+    font-weight: 600;
+    color: #0f172a;
+    overflow-wrap: anywhere;
+  }
+  .dash-meta-val--money { font-size: 1.15rem; font-weight: 800; color: #15803d; letter-spacing: -0.02em; }
   .card { background: #fff; padding: 16px 18px; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 14px; max-width: 100%; }
   .stat {
     margin: 8px 0;
@@ -95,6 +147,13 @@
   .current:hover { background: #e0e7ff; }
   .log ul { padding-left: 18px; margin: 8px 0 0; }
   .log li { margin: 4px 0; overflow-wrap: anywhere; word-break: break-word; }
+  .home-log strong { display: block; margin-bottom: 8px; font-size: 0.95rem; }
+  .modal-fun-hint {
+    margin: 12px 0 0;
+    font-size: 0.9rem;
+    color: #64748b;
+    line-height: 1.45;
+  }
   .relations-placeholder { color: #64748b; font-size: 0.95rem; line-height: 1.5; margin: 0; }
 
   .modal-backdrop {
@@ -146,6 +205,75 @@
     cursor: pointer;
   }
   .modal-close:hover { background: #d1d5db; }
+
+  .shop-browser-shell,
+  .work-browser-shell {
+    margin: 0 0 4px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #cbd5e1;
+    background: #e2e8f0;
+  }
+  .shop-browser__tabs,
+  .work-browser__tabs {
+    display: flex;
+    gap: 0;
+    align-items: flex-end;
+    list-style: none;
+    margin: 0;
+    padding: 4px 4px 0;
+  }
+  .shop-tab,
+  .work-tab {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 8px 4px 10px;
+    font-size: clamp(9px, 2.8vw, 12px);
+    font-weight: 700;
+    line-height: 1.15;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    background: #94a3b8;
+    color: #f8fafc;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background 0.12s, color 0.12s;
+  }
+  .shop-tab:hover,
+  .work-tab:hover { background: #64748b; }
+  .shop-tab.is-active,
+  .work-tab.is-active {
+    background: #fff;
+    color: #0f172a;
+    border-color: #cbd5e1;
+    border-bottom-color: #fff;
+    position: relative;
+    z-index: 2;
+    margin-bottom: -1px;
+    padding-bottom: 11px;
+    box-shadow: 0 -2px 8px rgba(15, 23, 42, 0.06);
+  }
+  .shop-tab:focus-visible,
+  .work-tab:focus-visible { outline: 2px solid #6366f1; outline-offset: -2px; }
+  @media (prefers-reduced-motion: reduce) {
+    .shop-tab,
+    .work-tab { transition: none; }
+  }
+  .shop-panels-wrap,
+  .work-panels-wrap {
+    background: #fff;
+    padding: 12px 14px 14px;
+  }
+  .shop-panel[hidden],
+  .work-panel[hidden] { display: none !important; }
+  .work-freelance-hint {
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+    color: #64748b;
+    line-height: 1.45;
+  }
 
   #bg-audio { display: none; }
   #music-unlock {
@@ -222,14 +350,51 @@
 </head>
 <body>
 
-<main>
+<main class="home-main">
   <h1>🧑‍💻 Симулятор айтишника</h1>
-  <div class="status-strip" aria-label="Краткий статус">
-    <span>💰 {{ player.money }}₽</span>
-    <span>⚡ {{ player.energy }}</span>
-    <span>😊 {{ player.mood }}</span>
+  <div class="card home-dashboard" aria-label="Состояние персонажа">
+    <p class="home-dashboard__title">Сейчас у тебя</p>
+    <div class="dash-bars">
+      <div class="dash-bar-col">
+        <span class="dash-bar-caption">⚡ Энергия</span>
+        <div class="bar-bg"><div class="bar-fill" style="background:#22c55e;width:{{ player.energy }}%"></div></div>
+        <span class="dash-bar-num">{{ player.energy }} / 100</span>
+      </div>
+      <div class="dash-bar-col">
+        <span class="dash-bar-caption">😊 Настроение</span>
+        <div class="bar-bg"><div class="bar-fill" style="background:#3b82f6;width:{{ player.mood }}%"></div></div>
+        <span class="dash-bar-num">{{ player.mood }} / 100</span>
+      </div>
+    </div>
+    <div class="dash-meta">
+      <div class="dash-meta-row">
+        <span class="dash-meta-label">💰 Деньги</span>
+        <span class="dash-meta-val dash-meta-val--money">{{ player.money }}₽</span>
+      </div>
+      <div class="dash-meta-row">
+        <span class="dash-meta-label">💼 Должность</span>
+        <span class="dash-meta-val">{{ player.job }}</span>
+      </div>
+      <div class="dash-meta-row">
+        <span class="dash-meta-label">🏠 Жильё</span>
+        <span class="dash-meta-val">{{ player.home }}</span>
+      </div>
+      <div class="dash-meta-row">
+        <span class="dash-meta-label">🛴 Транспорт</span>
+        <span class="dash-meta-val">{{ player.transport }}</span>
+      </div>
+    </div>
   </div>
-  <p style="text-align:center;color:#64748b;font-size:0.9rem;margin:0 8px 8px;">Выбери раздел внизу 👇</p>
+  <div class="card log home-log" aria-label="Журнал действий">
+    <strong>📜 Последние действия</strong>
+    <ul>
+      {% for entry in log | reverse %}
+        <li>{{ entry }}</li>
+      {% else %}
+        <li>Пока ничего не произошло...</li>
+      {% endfor %}
+    </ul>
+  </div>
 </main>
 
 <div class="modal-backdrop" id="modal-skills" role="dialog" aria-modal="true" aria-labelledby="modal-skills-title" data-modal="skills">
@@ -243,23 +408,6 @@
       <div class="stat"><span class="label">📈 Уровень</span> {{ player.level }}</div>
       <div class="stat"><span class="label">💻 Ноутбук</span> {{ player.laptop or "нет" }}</div>
     </div>
-    <div class="card">
-      <h2>💼 Карьера</h2>
-      <div class="grid">
-        {% for j in jobs %}
-          {% if player.job == j.name %}
-            <form><button type="button" class="current" disabled>✅ {{ j.name }}</button></form>
-          {% elif player.level >= j.min_level and (not j.laptop or player.laptop == j.laptop) %}
-            <form method="post" action="/apply_job">
-              <input type="hidden" name="name" value="{{ j.name }}">
-              <button type="submit" class="btn-amber">📋 {{ j.name }} (ур.{{ j.min_level }})</button>
-            </form>
-          {% else %}
-            <form><button type="button" disabled>🔒 {{ j.name }} (ур.{{ j.min_level }}{% if j.laptop %}, {{ j.laptop }}{% endif %})</button></form>
-          {% endif %}
-        {% endfor %}
-      </div>
-    </div>
   </div>
 </div>
 
@@ -269,27 +417,41 @@
       <h2 id="modal-work-title">💼 Работа</h2>
       <button type="button" class="modal-close" data-close-modal aria-label="Закрыть">×</button>
     </div>
-    <div class="card modal-label-wide">
-      <div class="stat">
-        <span class="label">⚡ Энергия</span>
-        <div class="bar-bg"><div class="bar-fill" style="background:#22c55e;width:{{ player.energy }}%"></div></div> {{ player.energy }}
+    <div class="work-browser-shell">
+      <div class="work-browser__tabs" role="tablist" aria-label="Работа">
+        <button type="button" class="work-tab is-active" role="tab" id="work-tab-freelance" data-work-tab="freelance" aria-selected="true" aria-controls="work-panel-freelance">Фриланс</button>
+        <button type="button" class="work-tab" role="tab" id="work-tab-career" data-work-tab="career" aria-selected="false" aria-controls="work-panel-career">Карьера</button>
       </div>
-      <div class="stat">
-        <span class="label">😊 Настроение</span>
-        <div class="bar-bg"><div class="bar-fill" style="background:#3b82f6;width:{{ player.mood }}%"></div></div> {{ player.mood }}
+      <div class="work-panels-wrap">
+        <div class="work-panel" id="work-panel-freelance" role="tabpanel" data-work-panel="freelance" aria-labelledby="work-tab-freelance">
+          <p class="work-freelance-hint">Статы на главном экране обновятся после смены.</p>
+          <div class="actions">
+            <form method="post" action="/work">
+              <button type="submit" {{ "disabled" if player.energy < 15 }}>💻 Работать</button>
+            </form>
+            <form method="post" action="/rest">
+              <button type="submit">😴 Отдыхать</button>
+            </form>
+          </div>
+        </div>
+        <div class="work-panel" id="work-panel-career" role="tabpanel" data-work-panel="career" hidden aria-labelledby="work-tab-career">
+          <h2 style="margin:0 0 10px;font-size:17px;">💼 Карьера</h2>
+          <div class="grid">
+            {% for j in jobs %}
+              {% if player.job == j.name %}
+                <form><button type="button" class="current" disabled>✅ {{ j.name }}</button></form>
+              {% elif player.level >= j.min_level and (not j.laptop or player.laptop == j.laptop) %}
+                <form method="post" action="/apply_job">
+                  <input type="hidden" name="name" value="{{ j.name }}">
+                  <button type="submit" class="btn-amber">📋 {{ j.name }} (ур.{{ j.min_level }})</button>
+                </form>
+              {% else %}
+                <form><button type="button" disabled>🔒 {{ j.name }} (ур.{{ j.min_level }}{% if j.laptop %}, {{ j.laptop }}{% endif %})</button></form>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
       </div>
-      <div class="stat"><span class="label">💰 Деньги</span> {{ player.money }}₽</div>
-      <div class="stat"><span class="label">💼 Должность</span> {{ player.job }}</div>
-      <div class="stat"><span class="label">🏠 Жильё</span> {{ player.home }}</div>
-      <div class="stat"><span class="label">🛴 Транспорт</span> {{ player.transport }}</div>
-    </div>
-    <div class="actions">
-      <form method="post" action="/work">
-        <button type="submit" {{ "disabled" if player.energy < 15 }}>💻 Работать</button>
-      </form>
-      <form method="post" action="/rest">
-        <button type="submit">😴 Отдыхать</button>
-      </form>
     </div>
   </div>
 </div>
@@ -300,51 +462,64 @@
       <h2 id="modal-shop-title">🛒 Магазин</h2>
       <button type="button" class="modal-close" data-close-modal aria-label="Закрыть">×</button>
     </div>
-    <div class="card">
-      <h2>Ноутбуки</h2>
-      <div class="grid">
-        {% for l in laptops %}
-          {% if player.laptop == l.name %}
-            <form><button type="button" class="current" disabled>✅ {{ l.name }}</button></form>
-          {% elif player.money >= l.price %}
-            <form method="post" action="/buy_laptop">
-              <input type="hidden" name="name" value="{{ l.name }}">
-              <button type="submit" class="btn-green">🛒 {{ l.name }} ({{ l.price }}₽)</button>
-            </form>
-          {% else %}
-            <form><button type="button" disabled>🛒 {{ l.name }} ({{ l.price }}₽)</button></form>
-          {% endif %}
-        {% endfor %}
+    <div class="shop-browser-shell">
+      <div class="shop-browser__tabs" role="tablist" aria-label="Витрины">
+        <button type="button" class="shop-tab is-active" role="tab" id="shop-tab-pms" data-shop-tab="pms" aria-selected="true" aria-controls="shop-panel-pms">ПМС-шоп</button>
+        <button type="button" class="shop-tab" role="tab" id="shop-tab-cygan" data-shop-tab="cygan" aria-selected="false" aria-controls="shop-panel-cygan">ЦИГАН</button>
+        <button type="button" class="shop-tab" role="tab" id="shop-tab-korita" data-shop-tab="korita" aria-selected="false" aria-controls="shop-panel-korita">корыта.ру</button>
       </div>
-      <p class="subcard-title">🏠 Жильё</p>
-      <div class="grid">
-        {% for h in homes %}
-          {% if player.home == h.name %}
-            <form><button type="button" class="current" disabled>✅ {{ h.name }}</button></form>
-          {% elif player.money >= h.price %}
-            <form method="post" action="/buy_home">
-              <input type="hidden" name="name" value="{{ h.name }}">
-              <button type="submit" class="btn-green">{{ h.name }} — {{ h.price }}₽ (+{{ h.rest_bonus }})</button>
-            </form>
-          {% else %}
-            <form><button type="button" disabled>{{ h.name }} — {{ h.price }}₽</button></form>
-          {% endif %}
-        {% endfor %}
-      </div>
-      <p class="subcard-title">🛴 Транспорт</p>
-      <div class="grid">
-        {% for t in transport %}
-          {% if player.transport == t.name %}
-            <form><button type="button" class="current" disabled>✅ {{ t.name }}</button></form>
-          {% elif player.money >= t.price %}
-            <form method="post" action="/buy_transport">
-              <input type="hidden" name="name" value="{{ t.name }}">
-              <button type="submit" class="btn-green">{{ t.name }} — {{ t.price }}₽ (+{{ t.work_bonus }}%)</button>
-            </form>
-          {% else %}
-            <form><button type="button" disabled>{{ t.name }} — {{ t.price }}₽</button></form>
-          {% endif %}
-        {% endfor %}
+      <div class="shop-panels-wrap">
+        <div class="shop-panel" id="shop-panel-pms" role="tabpanel" data-shop-panel="pms" aria-labelledby="shop-tab-pms">
+          <h2 style="margin:0 0 10px;font-size:17px;">💻 Ноутбуки</h2>
+          <div class="grid">
+            {% for l in laptops %}
+              {% if player.laptop == l.name %}
+                <form><button type="button" class="current" disabled>✅ {{ l.name }}</button></form>
+              {% elif player.money >= l.price %}
+                <form method="post" action="/buy_laptop">
+                  <input type="hidden" name="name" value="{{ l.name }}">
+                  <button type="submit" class="btn-green">🛒 {{ l.name }} ({{ l.price }}₽)</button>
+                </form>
+              {% else %}
+                <form><button type="button" disabled>🛒 {{ l.name }} ({{ l.price }}₽)</button></form>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        <div class="shop-panel" id="shop-panel-cygan" role="tabpanel" data-shop-panel="cygan" hidden aria-labelledby="shop-tab-cygan">
+          <h2 style="margin:0 0 10px;font-size:17px;">🏠 Жильё</h2>
+          <div class="grid">
+            {% for h in homes %}
+              {% if player.home == h.name %}
+                <form><button type="button" class="current" disabled>✅ {{ h.name }}</button></form>
+              {% elif player.money >= h.price %}
+                <form method="post" action="/buy_home">
+                  <input type="hidden" name="name" value="{{ h.name }}">
+                  <button type="submit" class="btn-green">{{ h.name }} — {{ h.price }}₽ (+{{ h.rest_bonus }})</button>
+                </form>
+              {% else %}
+                <form><button type="button" disabled>{{ h.name }} — {{ h.price }}₽</button></form>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        <div class="shop-panel" id="shop-panel-korita" role="tabpanel" data-shop-panel="korita" hidden aria-labelledby="shop-tab-korita">
+          <h2 style="margin:0 0 10px;font-size:17px;">🛴 Транспорт</h2>
+          <div class="grid">
+            {% for t in transport %}
+              {% if player.transport == t.name %}
+                <form><button type="button" class="current" disabled>✅ {{ t.name }}</button></form>
+              {% elif player.money >= t.price %}
+                <form method="post" action="/buy_transport">
+                  <input type="hidden" name="name" value="{{ t.name }}">
+                  <button type="submit" class="btn-green">{{ t.name }} — {{ t.price }}₽ (+{{ t.work_bonus }}%)</button>
+                </form>
+              {% else %}
+                <form><button type="button" disabled>{{ t.name }} — {{ t.price }}₽</button></form>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -377,16 +552,7 @@
         <button type="submit" {{ "disabled" if player.money < 20 }}>🎮 Развлечься (−20₽)</button>
       </form>
     </div>
-    <div class="card log">
-      <strong>📜 Последние действия:</strong>
-      <ul>
-        {% for entry in log | reverse %}
-          <li>{{ entry }}</li>
-        {% else %}
-          <li>Пока ничего не произошло...</li>
-        {% endfor %}
-      </ul>
-    </div>
+    <p class="modal-fun-hint">События смотри на главном экране в блоке «Последние действия».</p>
   </div>
 </div>
 
@@ -466,6 +632,8 @@
 <script>
 (function () {
   var tabs = ['skills', 'work', 'shop', 'relations', 'fun'];
+  var STORE_KEYS = ['pms', 'cygan', 'korita'];
+  var WORK_KEYS = ['freelance', 'career'];
   var modals = {
     skills: document.getElementById('modal-skills'),
     work: document.getElementById('modal-work'),
@@ -493,14 +661,67 @@
     return null;
   }
 
-  function setUrlForTab(name) {
+  function syncUrl(opts) {
     try {
       var u = new URL(window.location.href);
-      if (name) u.searchParams.set('tab', name);
-      else u.searchParams.delete('tab');
       u.searchParams.delete('open');
+      if (!opts || !opts.tab) {
+        u.searchParams.delete('tab');
+        u.searchParams.delete('store');
+        u.searchParams.delete('worktab');
+      } else {
+        u.searchParams.set('tab', opts.tab);
+        if (opts.tab === 'shop') {
+          var sk = opts.store && STORE_KEYS.indexOf(opts.store) >= 0 ? opts.store : 'pms';
+          u.searchParams.set('store', sk);
+          u.searchParams.delete('worktab');
+        } else if (opts.tab === 'work') {
+          var wk = opts.worktab && WORK_KEYS.indexOf(opts.worktab) >= 0 ? opts.worktab : 'freelance';
+          u.searchParams.set('worktab', wk);
+          u.searchParams.delete('store');
+        } else {
+          u.searchParams.delete('store');
+          u.searchParams.delete('worktab');
+        }
+      }
       history.replaceState({}, '', u.pathname + u.search);
     } catch (e) {}
+  }
+
+  function setShopTab(storeKey, opts) {
+    opts = opts || {};
+    if (STORE_KEYS.indexOf(storeKey) < 0) storeKey = 'pms';
+    document.querySelectorAll('[data-shop-tab]').forEach(function (btn) {
+      var k = btn.getAttribute('data-shop-tab');
+      var on = k === storeKey;
+      btn.classList.toggle('is-active', on);
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    document.querySelectorAll('[data-shop-panel]').forEach(function (panel) {
+      var k = panel.getAttribute('data-shop-panel');
+      panel.hidden = k !== storeKey;
+    });
+    if (!opts.skipUrl && getOpenModalName() === 'shop') {
+      syncUrl({ tab: 'shop', store: storeKey });
+    }
+  }
+
+  function setWorkTab(workKey, opts) {
+    opts = opts || {};
+    if (WORK_KEYS.indexOf(workKey) < 0) workKey = 'freelance';
+    document.querySelectorAll('[data-work-tab]').forEach(function (btn) {
+      var k = btn.getAttribute('data-work-tab');
+      var on = k === workKey;
+      btn.classList.toggle('is-active', on);
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    document.querySelectorAll('[data-work-panel]').forEach(function (panel) {
+      var k = panel.getAttribute('data-work-panel');
+      panel.hidden = k !== workKey;
+    });
+    if (!opts.skipUrl && getOpenModalName() === 'work') {
+      syncUrl({ tab: 'work', worktab: workKey });
+    }
   }
 
   function openModal(name, opts) {
@@ -517,7 +738,33 @@
       b.setAttribute('tabindex', on ? '0' : '-1');
     });
     document.body.classList.add('modal-open');
-    if (!opts.skipUrl) setUrlForTab(name);
+    if (name === 'shop') {
+      var sk = 'pms';
+      if (opts.store && STORE_KEYS.indexOf(opts.store) >= 0) sk = opts.store;
+      else {
+        try {
+          var u1 = new URL(window.location.href);
+          var qs = u1.searchParams.get('store');
+          if (STORE_KEYS.indexOf(qs) >= 0) sk = qs;
+        } catch (e2) {}
+      }
+      setShopTab(sk, { skipUrl: true });
+      if (!opts.skipUrl) syncUrl({ tab: 'shop', store: sk });
+    } else if (name === 'work') {
+      var wk = 'freelance';
+      if (opts.worktab && WORK_KEYS.indexOf(opts.worktab) >= 0) wk = opts.worktab;
+      else {
+        try {
+          var u2 = new URL(window.location.href);
+          var qw = u2.searchParams.get('worktab');
+          if (WORK_KEYS.indexOf(qw) >= 0) wk = qw;
+        } catch (e3) {}
+      }
+      setWorkTab(wk, { skipUrl: true });
+      if (!opts.skipUrl) syncUrl({ tab: 'work', worktab: wk });
+    } else {
+      if (!opts.skipUrl) syncUrl({ tab: name });
+    }
     measureTabBar();
   }
 
@@ -535,7 +782,7 @@
     });
     if (buttons.skills) buttons.skills.setAttribute('tabindex', '0');
     document.body.classList.remove('modal-open');
-    if (!opts.skipUrl) setUrlForTab(null);
+    if (!opts.skipUrl) syncUrl(null);
     measureTabBar();
   }
 
@@ -549,6 +796,24 @@
         return;
       }
       openModal(id);
+    });
+  });
+
+  document.querySelectorAll('[data-shop-tab]').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var k = btn.getAttribute('data-shop-tab');
+      if (STORE_KEYS.indexOf(k) < 0) return;
+      setShopTab(k, { skipUrl: false });
+    });
+  });
+
+  document.querySelectorAll('[data-work-tab]').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var k = btn.getAttribute('data-work-tab');
+      if (WORK_KEYS.indexOf(k) < 0) return;
+      setWorkTab(k, { skipUrl: false });
     });
   });
 
@@ -580,10 +845,28 @@
   var params = new URLSearchParams(window.location.search);
   var fromOpen = params.get('open');
   var tab = params.get('tab');
-  if (fromOpen === 'homes' || fromOpen === 'transport') tab = 'shop';
+  var store = params.get('store');
+  var worktab = params.get('worktab');
+  if (fromOpen === 'homes') {
+    tab = 'shop';
+    store = 'cygan';
+  } else if (fromOpen === 'transport') {
+    tab = 'shop';
+    store = 'korita';
+  }
   if (tab && tabs.indexOf(tab) >= 0) {
-    openModal(tab, { skipUrl: true });
-    setUrlForTab(tab);
+    if (tab === 'shop') {
+      var sk0 = STORE_KEYS.indexOf(store) >= 0 ? store : 'pms';
+      openModal('shop', { skipUrl: true, store: sk0 });
+      syncUrl({ tab: 'shop', store: sk0 });
+    } else if (tab === 'work') {
+      var wk0 = WORK_KEYS.indexOf(worktab) >= 0 ? worktab : 'freelance';
+      openModal('work', { skipUrl: true, worktab: wk0 });
+      syncUrl({ tab: 'work', worktab: wk0 });
+    } else {
+      openModal(tab, { skipUrl: true });
+      syncUrl({ tab: tab });
+    }
   }
 
   window.addEventListener('resize', measureTabBar);
