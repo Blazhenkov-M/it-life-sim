@@ -65,3 +65,6 @@ pip-wheel-metadata/
 # requirements.txt
 # *.py
 # README.md (можно оставить если не нужен)
+
+# Frontend (сборка в образе)
+frontend/node_modules/

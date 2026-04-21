@@ -1,17 +1,17 @@
-import json
 import random
 from pathlib import Path
 from urllib.parse import quote
 
-from fastapi import FastAPI, Form, Request
-from fastapi.responses import RedirectResponse
+from fastapi import FastAPI
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
 
 BASE_DIR = Path(__file__).parent
+FRONTEND_DIST = BASE_DIR / "frontend" / "dist"
 
 app = FastAPI()
-templates = Jinja2Templates(directory=BASE_DIR / "templates")
 app.mount("/audio", StaticFiles(directory=BASE_DIR / "audio"), name="audio")
 
 
@@ -24,6 +24,7 @@ def music_tracks() -> list[str]:
         key=lambda p: p.name.lower(),
     )
     return [f"/audio/music/{quote(p.name)}" for p in files]
+
 
 jobs = [
     {"name": "офисный шнырь", "min_level": 1, "laptop": None, "income": (20, 40)},
@@ -107,11 +108,31 @@ def check_level_up() -> None:
         add_log(f"🎉 Level up! Теперь ты уровень {player['level']}!")
 
 
-@app.post("/work")
-def work():
+def state_payload() -> dict:
+    return {
+        "player": dict(player),
+        "log": list(log),
+        "jobs": [{**j, "income": list(j["income"])} for j in jobs],
+        "laptops": laptops,
+        "homes": homes,
+        "transport": transport,
+        "fun_activities": FUN_ACTIVITIES,
+        "music_tracks": music_tracks(),
+    }
+
+
+class FunPayload(BaseModel):
+    activity: str = ""
+
+
+class NamePayload(BaseModel):
+    name: str = ""
+
+
+def do_work() -> None:
     if player["energy"] < 15:
         add_log("❌ Не хватает энергии для работы!")
-        return RedirectResponse("/?tab=work&worktab=freelance", status_code=303)
+        return
 
     job = get_current_job()
     base = random.randint(*job["income"])
@@ -129,18 +150,16 @@ def work():
     else:
         add_log(f"💻 Поработал ({player['job']}). Заработал {earned}₽, получил 10 XP.")
     check_level_up()
-    return RedirectResponse("/?tab=work&worktab=freelance", status_code=303)
 
 
-@app.post("/fun")
-def fun(activity: str = Form()):
-    act = fun_activity_by_id(activity)
+def do_fun(activity_id: str) -> None:
+    act = fun_activity_by_id(activity_id)
     if not act:
         add_log("❌ Такого развлечения нет!")
-        return RedirectResponse("/?tab=fun", status_code=303)
+        return
     if player["money"] < act["price"]:
         add_log(f"❌ Не хватает денег на «{act['title']}»! Нужно {act['price']}₽.")
-        return RedirectResponse("/?tab=fun", status_code=303)
+        return
 
     player["mood"] = clamp(player["mood"] + act["mood"])
     player["money"] -= act["price"]
@@ -148,69 +167,101 @@ def fun(activity: str = Form()):
         add_log(f"🎉 {act['title']}! Настроение +{act['mood']}, −{act['price']}₽.")
     else:
         add_log(f"🎉 {act['title']}! Настроение +{act['mood']}.")
-    return RedirectResponse("/?tab=fun", status_code=303)
 
 
-@app.post("/buy_laptop")
-def buy_laptop(name: str = Form()):
+def do_buy_laptop(name: str) -> None:
     laptop = next((l for l in laptops if l["name"] == name), None)
     if not laptop:
         add_log("❌ Такого ноутбука не существует!")
-        return RedirectResponse("/?tab=shop&store=pms", status_code=303)
+        return
     if player["money"] < laptop["price"]:
         add_log(f"❌ Недостаточно денег на {name}! Нужно {laptop['price']}₽.")
-        return RedirectResponse("/?tab=shop&store=pms", status_code=303)
+        return
     player["money"] -= laptop["price"]
     player["laptop"] = name
     add_log(f"💻 Купил {name} за {laptop['price']}₽!")
-    return RedirectResponse("/?tab=shop&store=pms", status_code=303)
 
 
-@app.post("/apply_job")
-def apply_job(name: str = Form()):
+def do_apply_job(name: str) -> None:
     job = next((j for j in jobs if j["name"] == name), None)
     if not job:
         add_log("❌ Такой работы не существует!")
-        return RedirectResponse("/?tab=work&worktab=career", status_code=303)
+        return
     if player["level"] < job["min_level"]:
         add_log(f"❌ Недостаточно уровня для «{name}»! Нужен {job['min_level']}.")
-        return RedirectResponse("/?tab=work&worktab=career", status_code=303)
+        return
     if job["laptop"] and player["laptop"] != job["laptop"]:
         add_log(f"❌ Нужен ноутбук «{job['laptop']}» для работы «{name}»!")
-        return RedirectResponse("/?tab=work&worktab=career", status_code=303)
+        return
     player["job"] = name
     add_log(f"🎉 Вы устроились на новую работу: {name}!")
-    return RedirectResponse("/?tab=work&worktab=career", status_code=303)
 
 
-@app.post("/buy_home")
-def buy_home(name: str = Form()):
+def do_buy_home(name: str) -> None:
     home = next((h for h in homes if h["name"] == name), None)
     if not home:
         add_log("❌ Такого жилья нет!")
-        return RedirectResponse("/?tab=shop&store=cygan", status_code=303)
+        return
     if player["money"] < home["price"]:
         add_log("Недостаточно денег")
-        return RedirectResponse("/?tab=shop&store=cygan", status_code=303)
+        return
     player["money"] -= home["price"]
     player["home"] = name
     add_log("Куплено!")
-    return RedirectResponse("/?tab=shop&store=cygan", status_code=303)
 
 
-@app.post("/buy_transport")
-def buy_transport(name: str = Form()):
+def do_buy_transport(name: str) -> None:
     item = next((t for t in transport if t["name"] == name), None)
     if not item:
         add_log("❌ Такого транспорта нет!")
-        return RedirectResponse("/?tab=shop&store=korita", status_code=303)
+        return
     if player["money"] < item["price"]:
         add_log("Недостаточно денег")
-        return RedirectResponse("/?tab=shop&store=korita", status_code=303)
+        return
     player["money"] -= item["price"]
     player["transport"] = name
     add_log("Куплено!")
-    return RedirectResponse("/?tab=shop&store=korita", status_code=303)
+
+
+@app.get("/api/state")
+def api_state():
+    return JSONResponse(content=jsonable_encoder(state_payload()))
+
+
+@app.post("/api/work")
+def api_work():
+    do_work()
+    return JSONResponse(content=jsonable_encoder(state_payload()))
+
+
+@app.post("/api/fun")
+def api_fun(body: FunPayload):
+    do_fun(body.activity)
+    return JSONResponse(content=jsonable_encoder(state_payload()))
+
+
+@app.post("/api/buy_laptop")
+def api_buy_laptop(body: NamePayload):
+    do_buy_laptop(body.name)
+    return JSONResponse(content=jsonable_encoder(state_payload()))
+
+
+@app.post("/api/apply_job")
+def api_apply_job(body: NamePayload):
+    do_apply_job(body.name)
+    return JSONResponse(content=jsonable_encoder(state_payload()))
+
+
+@app.post("/api/buy_home")
+def api_buy_home(body: NamePayload):
+    do_buy_home(body.name)
+    return JSONResponse(content=jsonable_encoder(state_payload()))
+
+
+@app.post("/api/buy_transport")
+def api_buy_transport(body: NamePayload):
+    do_buy_transport(body.name)
+    return JSONResponse(content=jsonable_encoder(state_payload()))
 
 
 @app.get("/homes")
@@ -223,24 +274,28 @@ def transport_redirect():
     return RedirectResponse("/?tab=shop&store=korita", status_code=307)
 
 
-@app.get("/")
-def index(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="index.html",
-        context={
-            "player": player,
-            "jobs": jobs,
-            "laptops": laptops,
-            "homes": homes,
-            "transport": transport,
-            "fun_activities": FUN_ACTIVITIES,
-            "log": log,
-            "music_tracks_json": json.dumps(music_tracks()),
-        },
+if FRONTEND_DIST.is_dir() and (FRONTEND_DIST / "assets").is_dir():
+    app.mount(
+        "/assets",
+        StaticFiles(directory=FRONTEND_DIST / "assets"),
+        name="assets",
     )
+
+
+@app.get("/")
+def index():
+    index_path = FRONTEND_DIST / "index.html"
+    if not index_path.is_file():
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detail": "Frontend not built. Run: cd frontend && npm install && npm run build",
+            },
+        )
+    return FileResponse(index_path, media_type="text/html; charset=utf-8")
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

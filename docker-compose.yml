@@ -2,5 +2,8 @@ services:
   app:
     build: .
     ports:
+      # Удобный URL: http://localhost:8000/ (не используйте в браузере 0.0.0.0)
+      - "8000:8000"
+      # Без номера порта: http://localhost/
       - "80:8000"
     restart: unless-stopped
